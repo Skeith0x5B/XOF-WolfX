@@ -1,0 +1,42 @@
+=====
+WolfX
+=====
+
+TODO: Make FacePlayer() a static function in WolfXGameObjects.cpp. Have it accept a game object ref, this needs a camera base class
+		to be added so we can access it within FacePlayer().
+
+TODO: Convert rotation from radians to more intuitive degrees.
+
+TODO: Add .obj support to mesh manager
+
+NOTE: Issues with meshes spawning several units off resolved by having the mesh manager dynamically allocate the mesh
+		(similar to how the material manager dynamically allocates textures and shaders to preserve OpenGL-related info about them).
+
+NOTE: Currently toggling culling off then back on for sprites.
+
+TODO: Merge camera Yaw() and Pitch() into PitchAndYaw() to reduce stack pushes
+
+TODO: Base class for cameras
+
+TODO: Sort out coordinate system confusion (have negated x component of translation in FirstPersonCamera::Translate()).
+
+TODO: Mesh class - InitMaterial(): change DEFAULT_MESH_MAT to actual mesh name for material
+
+! Had to dynamically alloate the shaders held by the material manager, the copies been constructred (for the temp,
+	then the item added to the unordered map) were throwing off the programID and such; causing addUniform to fail,
+	leaving an effectively useless shader.
+
+- NOTE: String hashing, use CRC32?
+		XOF_Hash.hpp/cpp : hash function and hash table(internal to XOF_Hash.hpp/cpp via static).
+		Keeping a table will allow for collision checking.
+		
+- NOTE: Updating game objects, engine book p918-920 suggest batching (perhaps have rendering requests etc... instead of
+		draw calls). Then process those requests at the end?
+
+---
+
+PROBLEM:	Event system of derived events adding hardcoded fields won't work since the container is of type Event.
+			Cannot cast up since there's no valid memory beyond sizeof(Event) bytes. Solution is to use Variants approach
+			found in engine book, arguably requries more typing put won't have the same issues, one issue though is
+			in adding enums specifying which value is where (in the derived class) - this won't be possible either... No,
+			quick test suggest this will infact be possible.

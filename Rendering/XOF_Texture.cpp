@@ -10,8 +10,6 @@
 */
 #include "XOF_Texture.hpp"
 #include "../ThirdParty/stb_image.h"
-#include <assert.h>
-#include <iostream>
 
 
 Texture::Texture() {
@@ -84,7 +82,7 @@ U32 Texture::GetPixel( U32 x, U32 y ) const {
 }
 
 void Texture::Bind( U32 unit ) {
-	assert( ( unit >= 0 ) && ( unit <= 31 ) );
+	XOF_ASSERT( ( unit >= 0 ) && ( unit <= 31 ) )
 	glActiveTexture( GL_TEXTURE0 + unit );
 	glBindTexture( GL_TEXTURE_2D, mTexture );
 }

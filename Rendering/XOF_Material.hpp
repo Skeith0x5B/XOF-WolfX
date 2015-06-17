@@ -15,6 +15,7 @@
 #include "../Platform/XOF_Platform.hpp"
 #include "XOF_Texture.hpp"
 #include "XOF_Shader.hpp"
+#include "XOF_GPUState.hpp"
 class MaterialManager;
 
 
@@ -32,6 +33,7 @@ public:
 	Texture*			GetTexture( XOF_TEXTURE_TYPE type, U32 index ) const;
 	U8					GetTextureCount( XOF_TEXTURE_TYPE type ) const;
 	Shader*				GetShader();
+	GPUState*			GetGPUState() const;
 
 	// bool				AddShaderVariable();?
 	// void				SetShaderVariables();?
@@ -42,6 +44,7 @@ private:
 
 	Texture*			mTextures[XOF_TEXTURE_TYPE::TEXTURE_TYPE_COUNT][XOF_MAX_TEXTURE_COUNT];
 	Shader*				mShader;
+	GPUState*			mGPUState;
 	U8					mTextureCounts[XOF_TEXTURE_TYPE::TEXTURE_TYPE_COUNT];
 };
 

@@ -7,23 +7,31 @@
 
 class Player : public GameObject {
 public:
-					Player( glm::vec3 spawnPos = glm::vec3( 0.f, 0.f, 0.f ),
-						Mesh *mesh = nullptr, Sprite *sprite = nullptr, 
-						Material *material = nullptr, FirstPersonCamera *camera = nullptr );
-					~Player();
+	enum PLAYER_OBJECT_STATES {
+		NEUTRAL = 0,
+		FIRING,
+	};
 
-	virtual void	Update( float dt ) override;
-	virtual void	OnEvent( const Event *_event ) override;
+							Player( EngineSubSystems *engineSystems, 
+								glm::vec3 spawnPos = glm::vec3( 0.f, 0.f, 0.f ),
+								Mesh *mesh = nullptr, Sprite *sprite = nullptr, 
+								Material *material = nullptr, FirstPersonCamera *camera = nullptr );
+							~Player();
+							
+	virtual void			Update( float dt ) override;
+	virtual void			OnEvent( const Event *_event ) override;
 
 private:
-	U32				mHealth;
+	U8						mHealth;
+	PLAYER_OBJECT_STATES	mState;
 };
 // ---------------------------------------------------------------------------
 
 
 class BillBoard : public GameObject {
 public:
-					BillBoard( glm::vec3 spawnPos = glm::vec3( 0.f, 0.f, 0.f ),
+					BillBoard( EngineSubSystems *engineSystems,
+						glm::vec3 spawnPos = glm::vec3( 0.f, 0.f, 0.f ),
 						Mesh *mesh = nullptr, Sprite *sprite = nullptr, 
 						Material *material = nullptr, FirstPersonCamera *camera = nullptr );
 					~BillBoard();
@@ -44,34 +52,52 @@ public:
 		OPENING,
 		CLOSING,
 		CLOSED,
+		ONE_WAY_FINISHED,
 	};
 
-					Mover( const glm::vec3& directionToMove,
-						glm::vec3 spawnPos = glm::vec3( 0.f, 0.f, 0.f ),
-						Mesh *mesh = nullptr, Sprite *sprite = nullptr, 
-						Material *material = nullptr, FirstPersonCamera *camera = nullptr );
-					~Mover();
+	enum MOVER_OBJECT_AXIS {
+		X = 0,
+		Y,
+		Z,
+	};
 
-	virtual void	Update( float dt ) override;
-	virtual void	OnEvent( const Event *_event ) override;
+						Mover( EngineSubSystems *engineSystems, 
+							MOVER_OBJECT_AXIS directionToMove, bool isTwoWay = true, 
+							float amountToMove = 1.f, I8 movementStepSign = 1, float movementSpeed = 0.005f,
+							glm::vec3 spawnPos = glm::vec3( 0.f, 0.f, 0.f ),
+							Mesh *mesh = nullptr, Sprite *sprite = nullptr, 
+							Material *material = nullptr, FirstPersonCamera *camera = nullptr );
+						~Mover();
 
-	void			SetMovementDirection( const glm::vec3& direction );
+	virtual void		Update( float dt ) override;
+	virtual void		OnEvent( const Event *_event ) override;
+
+	void				SetMovementDirection( MOVER_OBJECT_AXIS direction );
+	void				SetMovementDistance( float distance );
+	void				SetMovementSpeed( float speed );
+						// Specifies wether we move back or forward with each step
+	void				SetMovementStepSign( I8 sign );
+	void				SetTwoWay( bool isTwoWay );
 
 private:
-	glm::vec3		mDirectionToMoveAlong;
-	glm::vec3		mStartingPos;
-	float			mMovementSpeed;
-	U8				mState;
-	
+	MOVER_OBJECT_AXIS	mDirectionToMoveAlong;
+	float				mAmountToMoveBy;
+	float				mAmountMoved;
+	float				mMovementSpeed;
+	glm::vec3			mStartingPos;
+	U8					mState;
+	I8					mMovementStepSign;
+	bool				mIsTwoWay;
 
-	void			Move();
+	void				Move();
 };
 // ---------------------------------------------------------------------------
 
 
 class Enemy : public GameObject {
 public:
-					Enemy( 	glm::vec3 spawnPos = glm::vec3( 0.f, 0.f, 0.f ),
+					Enemy( EngineSubSystems *engineSystems,
+						glm::vec3 spawnPos = glm::vec3( 0.f, 0.f, 0.f ),
 						Mesh *mesh = nullptr, Sprite *sprite = nullptr, 
 						Material *material = nullptr, FirstPersonCamera *camera = nullptr );
 					~Enemy();

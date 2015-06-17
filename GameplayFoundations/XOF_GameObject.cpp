@@ -15,8 +15,11 @@ static const I32 XOF_GAME_OBJECT_TYPE_UNDEFINED = -1;
 static const U32 XOF_UNNAMED_GAME_OBJECT_COUNT = 0;
 
 
-GameObject::GameObject( glm::vec3 spawnPos, Mesh *mesh, Sprite *sprite, 
-	Material *material, FirstPersonCamera *camera ) {
+GameObject::GameObject( EngineSubSystems *engineSystems, glm::vec3 spawnPos, 
+	Mesh *mesh, Sprite *sprite, Material *material, FirstPersonCamera *camera ) {
+	// Game object must have a visual representation
+	XOF_ASSERT( mesh != nullptr || sprite != nullptr )
+	mEngine = engineSystems;
 	mTransform.translation = spawnPos;
 	mMesh = mesh;
 	mSprite = sprite;
@@ -80,6 +83,10 @@ void GameObject::SetMaterial( const Material *material ) {
 
 Material* GameObject::GetMaterial() const {
 	return mMaterial;
+}
+
+glm::vec3* GameObject::GetPosition() const {
+	return const_cast<glm::vec3*>( &mTransform.translation );
 }
 
 void GameObject::Translate( const glm::vec3& translation ) {

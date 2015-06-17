@@ -56,7 +56,7 @@ bool Mesh::Load( const std::string &fileName ) {
 			// temp index data
 			for( U32 k=0; k<sceneMesh->mNumFaces; ++k ) {
 				const aiFace &face = sceneMesh->mFaces[k];
-				assert( face.mNumIndices == 3 );
+				XOF_ASSERT( face.mNumIndices == 3 )
 
 				tempIndexData.push_back( face.mIndices[0] );
 				tempIndexData.push_back( face.mIndices[1] );

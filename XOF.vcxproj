@@ -80,7 +80,7 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\SFML-2.1_VS2012\lib\Debug;C:\Users\Jamie\Desktop\XOF_Local\ThirdParty\glew-1.11.0\lib\Debug\Win32;C:\Users\Jamie\Desktop\XOF_Local\ThirdParty\assimp--3.0.1270-sdk\lib\assimp_release-dll_win32;C:\Users\Jamie\Desktop\XOF_Local\GL_Branch\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>sfml-graphics-d.lib;sfml-system-d.lib;sfml-window-d.lib;OpenGL32.Lib;glew32.lib;glew32s.lib;assimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>sfml-graphics-d.lib;sfml-system-d.lib;sfml-window-d.lib;sfml-audio-d.lib;OpenGL32.Lib;glew32.lib;glew32s.lib;assimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <Profile>true</Profile>
     </Link>
   </ItemDefinitionGroup>
@@ -127,6 +127,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Audio\XOF_AudioManager.cpp" />
+    <ClCompile Include="Audio\XOF_Music.cpp" />
+    <ClCompile Include="Audio\XOF_SoundEffect.cpp" />
     <ClCompile Include="Editor\XOF-ED_TransformGizmo.cpp" />
     <ClCompile Include="GameplayFoundations\XOF_GameObject.cpp" />
     <ClCompile Include="Game\WolfX.cpp" />
@@ -139,6 +142,7 @@
     <ClCompile Include="Platform\XOF_Timer_Windows.cpp" />
     <ClCompile Include="Rendering\XOF_FirstPersonCamera.cpp" />
     <ClCompile Include="Rendering\XOF_GeoPrimitiveGenerator.cpp" />
+    <ClCompile Include="Rendering\XOF_GPUState.cpp" />
     <ClCompile Include="Rendering\XOF_Material.cpp" />
     <ClCompile Include="Rendering\XOF_MaterialManager.cpp" />
     <ClCompile Include="Rendering\XOF_Mesh.cpp" />
@@ -152,15 +156,23 @@
     <ClCompile Include="ThirdParty\stb_image.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Audio\XOF_AudioEngine.hpp" />
+    <ClInclude Include="Audio\XOF_AudioManager.hpp" />
+    <ClInclude Include="Audio\XOF_AudioRequest.hpp" />
+    <ClInclude Include="Audio\XOF_Music.hpp" />
+    <ClInclude Include="Audio\XOF_SoundEffect.hpp" />
     <ClInclude Include="Collision&amp;Physics\XOF_AxisAlignedBox.hpp" />
+    <ClInclude Include="Core\XOF_Assert.hpp" />
     <ClInclude Include="Core\XOF_Ray.hpp" />
     <ClInclude Include="Editor\XOF-ED_Brush.hpp" />
     <ClInclude Include="Editor\XOF-ED_TransformGizmo.hpp" />
+    <ClInclude Include="GameplayFoundations\XOF_EngineSubSystemFrontEnd.hpp" />
     <ClInclude Include="GameplayFoundations\XOF_Event.hpp" />
     <ClInclude Include="GameplayFoundations\XOF_GameObject.hpp" />
     <ClInclude Include="Game\WolfX.hpp" />
     <ClInclude Include="Game\WolfX_Events.hpp" />
     <ClInclude Include="Game\WolfX_GameObjects.hpp" />
+    <ClInclude Include="Game\WolfX_ResourcePaths.hpp" />
     <ClInclude Include="Game\XOF_Game.hpp" />
     <ClInclude Include="HIDs\XOF_Keyboard_I.hpp" />
     <ClInclude Include="HIDs\XOF_Keyboard_SFML.hpp" />
@@ -173,11 +185,13 @@
     <ClInclude Include="Platform\XOF_Timer_Windows.hpp" />
     <ClInclude Include="Rendering\XOF_FirstPersonCamera.hpp" />
     <ClInclude Include="Rendering\XOF_GeoPrimitiveGenerator.hpp" />
+    <ClInclude Include="Rendering\XOF_GPUState.hpp" />
     <ClInclude Include="Rendering\XOF_Material.hpp" />
     <ClInclude Include="Rendering\XOF_MaterialManager.hpp" />
     <ClInclude Include="Rendering\XOF_Mesh.hpp" />
     <ClInclude Include="Rendering\XOF_MeshManager.hpp" />
     <ClInclude Include="Rendering\XOF_Renderer_OpenGL.hpp" />
+    <ClInclude Include="Rendering\XOF_RenderRequest.hpp" />
     <ClInclude Include="Rendering\XOF_Shader.hpp" />
     <ClInclude Include="Rendering\XOF_Sprite.hpp" />
     <ClInclude Include="Rendering\XOF_SpriteManager.hpp" />

@@ -15,17 +15,12 @@
 
 
 #include "../Platform/XOF_Platform.hpp"
-#include "../GameplayFoundations/XOF_GameObject.hpp"
+//#include "../GameplayFoundations/XOF_GameObject.hpp"
+#include "XOF_RenderRequest.hpp"
+#include <vector>
+class GPUState;
 // TEMP
 struct TempLevel;
-
-
-struct RendererState {
-	// wireframe/solid
-	// winding order
-	// cull
-	// etc..?
-};
 
 
 class Renderer {
@@ -33,25 +28,21 @@ public:
 	bool	StartUp();
 	void	ShutDown();
 
-	void	Draw();
-	void	Draw( const GameObject& object );
-
-	// void SubmitBatchRequest(...);
-	// void RenderFrameAndSwapBuffers();
+	void	SubmitRenderRequest( RenderRequest& request );
+	void	RenderFrame();
 
 	void	ClearScreen();
 	void	Resize( U32 newWidth, U32 newHeight );
 
-	//		TEMP
-	void	DrawTempWolfXLevel( const TempLevel& tempLevel );
-			// Access sprite, update pre-existing draw to decide between sprite and mesh
-	void	DrawTempWolfXGameObject( const GameObject& object, const FirstPersonCamera& camera  );
+private:
+	//		TODO: Add a dynamic pool allocator here and add a next field to render request?
+	//		Why is a queue the only container that doesn't crash? Perhaps because
+	//		default ctor isn't used?
+	std::vector<RenderRequest>	mRenderRequests;
 
-//private:
 	void	DrawMesh( const Mesh& mesh, const Material& material );
 	void	DrawSprite( const Sprite& sprite, const Material& material );
-	//		RenderRequestList;
-	//		DynamicPoolAllocator<RenderRequest>;
+	void	SetGPUState( const GPUState& gpuState );
 };
 
 

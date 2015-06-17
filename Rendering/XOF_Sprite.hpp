@@ -23,25 +23,32 @@ class Sprite {
 public:
 	friend class	SpriteManager;
 
-					Sprite( U16 frameCount = 1, U16 startingFrame = 0, U16 subAnimationFrameCount = 1 );
+					Sprite( U8 frameCount = 1, U8 startingFrame = 0, U8 subAnimationFrameCount = 1 );
 					~Sprite();
 
-	void			SetAnimationFrames( U16 startingFrame, U16 frameCount );
-	U16				GetStartingFrame() const;
+	void			SetAnimationFrames( U8 startingFrame, U8 frameCount );
+	void			ResetAnimation();
+	U8				GetStartingFrame() const;
+	U8				GetCurrentFrame() const;
+	U8				GetAnimationFrameCount() const;
+
 	void			StepAnimation( float animationDelta );
 
 	void			GenerateVertexData();
+	UINT&			GetVertexBuffer() const;
+	UINT&			GetIndexBuffer() const;
 
-//private: TEMP: CHANGE THIS BACK
+//private:
 	Vertex			mVertices[4];
 
 	GLuint			mVB;
 	GLuint			mIB;
 
-	U16				mAnimationFrameCount;
-	U16				mSubAnimationFrameCount;
-	U16				mStartingAnimationFrame;
 	float			mCurrentAnimationFrame;
+	U8				mAnimationFrameCount;
+	U8				mSubAnimationFrameCount;
+	U8				mStartingAnimationFrame;
+	U8				PADDING; // Just padding for alignment/quick access, can be removed
 
 	void			UpdateTextureCoordinates();
 };

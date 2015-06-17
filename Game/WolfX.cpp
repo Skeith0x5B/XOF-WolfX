@@ -3,9 +3,11 @@
 #include <iostream>
 #include <SFML/Graphics.hpp>
 
+// RENDERING
 #include "../Platform/XOF_Platform.hpp"
 #include "../Platform/XOF_PlatformInfo.hpp"
 #include "../Platform/XOF_Timer.hpp"
+#include "../Rendering/XOF_Renderer_OpenGL.hpp"
 #include "../Rendering/XOF_FirstPersonCamera.hpp"
 #include "../Rendering/XOF_GeoPrimitiveGenerator.hpp"
 #include "../Rendering/XOF_Transform.hpp"
@@ -18,13 +20,31 @@ SpriteManager *spriteManager;
 #include "../Rendering/XOF_MeshManager.hpp"
 MeshManager *meshManager;
 
+// AUDIO
+#include "../Audio/XOF_Music.hpp"
+Music gTempBgm;
+#include "../Audio/XOF_SoundEffect.hpp"
+SoundEffect gTempSoundFX;
 
-namespace WOLFX_RESOURCE {
-	const std::string LEVEL = "./Game/GameResources/Levels/";
-	const std::string TEXTURE = "./Game/GameResources/Textures/";
-	const std::string SHADER = "./Game/GameResources/";
-	const std::string AUDIO = "./Game/GameResources/";
-}
+
+// GAME RESOURCE PATHS
+#include "WolfX_ResourcePaths.hpp"
+
+
+// TEMP
+//#include "../GameplayFoundations/XOF_EngineSubSystemFrontEnd.hpp"
+EngineSubSystems *engineSystems;
+
+
+struct TempLevel {
+	Texture	levelMap;
+	Mesh levelGeom;
+	UniqueMeshPtr levelPtr;
+	std::vector<Transform> tileTransforms;
+	Material *tileMaterial;
+	FirstPersonCamera *playerView;
+};
+
 
 enum WOLFX_LEVEL_OBJECTS {
 	BONES = 0,
@@ -35,6 +55,7 @@ enum WOLFX_LEVEL_OBJECTS {
 	DOOR,
 	ENEMY,
 };
+
 
 // Game objects
 #include "../GameplayFoundations/XOF_GameObject.hpp"
@@ -71,7 +92,7 @@ WolfX::WolfX() {
 
 WolfX::~WolfX() {
 	materialManager->ShutDown();
-	mRenderer.ShutDown();
+	mRenderer->ShutDown();
 }
 
 bool WolfX::Initialise( U16 width, U16 height, CHAR* caption ) {
@@ -80,7 +101,16 @@ bool WolfX::Initialise( U16 width, U16 height, CHAR* caption ) {
 	}
 
 	mMouse.SetWindow( mWindow.get() );
-	mRenderer.StartUp();
+
+	mEngine.renderer.reset( new Renderer() );
+	mEngine.renderer->StartUp();
+	mEngine.audio.reset( new AudioEngine() );
+	mEngine.audio->Startup();
+	engineSystems = &mEngine;
+
+	mEngine.audio->SubmitAudioRequest( AudioRequest(
+		XOF_AUDIO_REQUEST_TYPE::PLAY_MUSIC, nullptr, nullptr,
+		50.f, WOLFX_RESOURCE::AUDIO + "BGM.ogg" ) );
 
 	SetupScene();
 
@@ -116,7 +146,7 @@ void WolfX::Run() {
 
 			// TODO: FIX LOOP - MAY INVOLVE MODIFYING TIMER CLASS (SEE OGRE IMPLEMENTATION)
 			//while( unprocessedTime >= FRAME_TIME ) {
-				// GAME LOGIC
+				// GAME LOGIC - REACT TO EVENTS
 				while( !gGameEvents.empty() ) {
 					Event &e = gGameEvents.front();
 					for( auto &object : gGameObjects ) {
@@ -127,9 +157,16 @@ void WolfX::Run() {
 					gGameEvents.pop();
 				}
 
+				// GAME LOGIC - UPDATE/STEP GAME OBJECTS
 				for( auto &object : gGameObjects ) {
-					object->Update( timeDelta );
+					object->Update( static_cast<float>( timeDelta ) );
 				}
+				gTempPlayer->Update( static_cast<float>( timeDelta ) );
+
+				// ENGINE LOGIC - Process subsystem requests
+				mEngine.renderer->RenderFrame();
+				mEngine.audio->Update();
+				//mAudio.Update( dt ) etc...
 
 				++frameCount;
 				elapsedTime += timeDelta;
@@ -145,30 +182,66 @@ void WolfX::Run() {
 	} // if( mIsInitialised )
 }
 
+
+#include "../Audio/XOF_AudioManager.hpp"
 std::unique_ptr<Mesh> booker;
 void WolfX::SetupScene() {
 	materialManager = MaterialManager::Get();
 	materialManager->StartUp();
 
+	spriteManager = SpriteManager::Get();
+	spriteManager->StartUp();
+
 	materialManager->GetMaterial( "DEFAULT_MATERIAL" )->GetShader()->AddUniform( "transform" );
 	materialManager->GetMaterial( "DEFAULT_MATERIAL" )->GetShader()->Bind();
-
-	// Add player weapon...
 
 	// Add Wolfenstein sprite-sheets
 	MaterialDesc sheet;
 	sheet.diffuseMaps[0] = WOLFX_RESOURCE::TEXTURE + "ObjectSheet_2.png";
 	sheet.shader = XOF_RESOURCE::SHADER + "DiffuseTexture";
+
+	sheet.gpuStateName = "lightGPUState";
+	sheet.gpuState.AddToDisabledFlags( XOF_GPU_STATE_FLAGS::CULLING );
+	sheet.gpuState.AddToDisabledFlags( XOF_GPU_STATE_FLAGS::DEPTH_TEST );
+	sheet.gpuState.AddToDisabledFlags( XOF_GPU_STATE_FLAGS::DEPTH_CLAMP );
+
 	Material *sprsht = materialManager->AddMaterial( "objectSheet", sheet );
 
-	// Add Wolfenstein sprites
-	spriteManager = SpriteManager::Get();
+	// TODO: Add player weapon...
+	MaterialDesc playerWeaponMatDesc;
+	playerWeaponMatDesc.diffuseMaps[0] = WOLFX_RESOURCE::TEXTURE + "PistolSpriteSheet.png";
+	playerWeaponMatDesc.shader = XOF_RESOURCE::SHADER + "DiffuseTexture";
+	playerWeaponMatDesc.gpuStateName = "lightGPUState";
+	Material *tempTest = materialManager->AddMaterial( "playerWeaponMaterial", playerWeaponMatDesc );
 	
+	SpriteAnimationParams weaponParams;
+	weaponParams.startingFrame = 0;
+	weaponParams.frameCount = 5;
+	weaponParams.subAnimationFrameCount = 5;
+	Sprite *weapon = spriteManager->AddSprite( "weapon", &weaponParams );
+
+	// Lights
 	SpriteAnimationParams params;
 	params.frameCount = WOLFX_LEVEL_OBJECTS::SPRITE_COUNT;
 	params.startingFrame = WOLFX_LEVEL_OBJECTS::LIGHT;
 	params.subAnimationFrameCount = 1;
 	Sprite *test = spriteManager->AddSprite( "light", &params );
+
+	// Load enemy sprite sheet
+	MaterialDesc enemyMat;
+	enemyMat.diffuseMaps[0] = WOLFX_RESOURCE::TEXTURE + "GuardSpriteSheet.png";
+	enemyMat.shader = XOF_RESOURCE::SHADER + "DiffuseTexture";
+
+	enemyMat.gpuStateName = "guardGPUState";
+	enemyMat.gpuState.AddToDisabledFlags( XOF_GPU_STATE_FLAGS::CULLING );
+
+	materialManager->AddMaterial( "guardMaterial", enemyMat );
+
+	SpriteAnimationParams guardParams;
+	guardParams.frameCount = 14;
+	guardParams.startingFrame = 0;
+	guardParams.subAnimationFrameCount = 14;
+	spriteManager->AddSprite( "tempGuardSprite", &guardParams );
 
 	// Setup temp door model
 	meshManager = MeshManager::Get();
@@ -180,30 +253,24 @@ void WolfX::SetupScene() {
 	MaterialDesc tempDoorMat;
 	tempDoorMat.diffuseMaps[0] = WOLFX_RESOURCE::TEXTURE + "DoorTestTexture.png";
 	tempDoorMat.shader = XOF_RESOURCE::SHADER + "DiffuseTexture";
+	// Have the door use the default GPU state settings (just leave this field blank)
 	materialManager->AddMaterial( "tempDoorMaterial", tempDoorMat );
 
-	// Load enemy sprite sheet
-	MaterialDesc enemyMat;
-	enemyMat.diffuseMaps[0] = WOLFX_RESOURCE::TEXTURE + "GuardSpriteSheet.png";
-	enemyMat.shader = XOF_RESOURCE::SHADER + "DiffuseTexture";
-	materialManager->AddMaterial( "guardMaterial", enemyMat );
-
-	SpriteAnimationParams guardParams;
-	guardParams.frameCount = 14;
-	guardParams.startingFrame = 0;
-	guardParams.subAnimationFrameCount = 14;
-	spriteManager->AddSprite( "tempGuardSprite", &guardParams );
-
 	// Load level
-	LoadTempLevel( WOLFX_RESOURCE::LEVEL + "Level_0.png" );
+	LoadTempLevel( WOLFX_RESOURCE::LEVEL + "LevelMap.png" );
 	// Set player camera
-	gCamera.Setup( glm::vec3( 15.f, 0.4f, 7.f ), glm::vec3( 0.f, 0.f, 1.f ),
+	gCamera.Setup( glm::vec3( 11.f, 0.4f, 26.f ), glm::vec3( 0.f, 0.f, 1.f ),
 		static_cast<float>( mWindow->getSize().x ),  static_cast<float>( mWindow->getSize().y ),
 		static_cast<float>( mWindow->getSize().x ) / static_cast<float>( mWindow->getSize().y ), 
 		0.01f, 1000.f );
 
-	gTempPlayer.reset( new Player( glm::vec3( 15.f, 0.4f, 7.f ), nullptr, nullptr, nullptr, &gCamera ) );
+	gTempPlayer.reset( new Player( engineSystems, gCamera.GetPosition(), 
+		nullptr, spriteManager->GetSprite( "weapon" ), 
+		materialManager->GetMaterial("playerWeaponMaterial" ), &gCamera ) );
 	//gGameObjects.push_back( (UniqueGameObjectPtr)( new Player( glm::vec3( 12.5f, 0.4f, 10.f ), nullptr, nullptr, nullptr, nullptr ) ) );
+
+	// LOAD AUDIO
+	AudioManager::Get()->AddSoundEffect( WOLFX_RESOURCE::AUDIO + "DOOROPENANDCLOSE.wav" );
 }
 
 void WolfX::HandleEvents() {
@@ -214,7 +281,7 @@ void WolfX::HandleEvents() {
 		}
 
 		if( event.type == sf::Event::Resized ) {
-			mRenderer.Resize( event.size.width, event.size.height );
+			mRenderer->Resize( event.size.width, event.size.height );
 			gCamera.Resize( static_cast<float>( event.size.width ), static_cast<float>( event.size.height ) );
 		}
 	}
@@ -245,6 +312,11 @@ void WolfX::HandleInput() {
 	if( mKeyboard.IsKeyDown( XOF_KEYBOARD::E ) ) {
 		gCamera.Translate( 0.f, -0.001f, 0.f );
 	}
+
+	if( mKeyboard.IsKeyDown( XOF_KEYBOARD::R ) ) {
+		///gTempBgm.Restart();
+		gTempSoundFX.Play();
+	}
 	
 	// Looking
 	if( mKeyboard.IsKeyDown( XOF_KEYBOARD::ARROW_LEFT ) ) {
@@ -259,19 +331,20 @@ void WolfX::HandleInput() {
 
 	// Action
 	if( mKeyboard.IsKeyDown( XOF_KEYBOARD::SPACE_BAR ) ) {
-		gGameEvents.push( PlayerPressedActionKeyEvent() );
+		gGameEvents.push( PlayerPressedActionKeyEvent( gCamera.GetPosition() ) );
+	}
+
+	if( mKeyboard.IsKeyDown( XOF_KEYBOARD::RIGHT_CONTROL ) ) {
+		gGameEvents.push( PlayerPressedFireKeyEvent() );
 	}
 }
 
 void WolfX::Render() {
-	mRenderer.ClearScreen();
+	// Game objects submit their own render requests
 
-	mRenderer.DrawTempWolfXLevel( gTempLevel );
-
-	// Draw game objects
-	for( auto &object : gGameObjects ) {
-		mRenderer.DrawTempWolfXGameObject( *object, gCamera );
-	}
+	mEngine.renderer->SubmitRenderRequest( RenderRequest( XOF_RENDER_REQUEST_TYPE::RENDER_MESH,
+		gTempLevel.tileMaterial, &gTempLevel.levelGeom, nullptr, 
+		&gCamera, &gTempLevel.tileTransforms.at( 0 ) ) );
 
 	mWindow->display();
 }
@@ -445,31 +518,37 @@ void LoadTempLevel( const std::string &fileName ) {
 
 
 static void PlaceGuard( U32 xCoord, U32 yCoord ) {
-	gGameObjects.push_back( (UniqueGameObjectPtr)( new Enemy( glm::vec3( xCoord, 1.f, yCoord ),
+	gGameObjects.push_back( (UniqueGameObjectPtr)( new Enemy( engineSystems, glm::vec3( xCoord, 1.f, yCoord ),
 		nullptr, spriteManager->GetSprite( "tempGuardSprite" ), 
 		materialManager->GetMaterial( "guardMaterial" ), &gCamera ) ) ); 
 }
 
 static void PlaceDoor( U32 xCoord, U32 yCoord, U32 doorCode ) {
-	Mover *door = new Mover( glm::vec3( 0.f, 0.f, 0.9f ), 
-							 glm::vec3( xCoord, 0.f, yCoord ), meshManager->GetMesh( "tempDoorMesh" ), nullptr, 
-							 materialManager->GetMaterial( "tempDoorMaterial" ), &gCamera );
-	
+	Mover *door = nullptr;
+
 	// TODO: Replace this once the final door texture is done
 	switch( doorCode % 32 ) {
-		// left
-		case 0: door->Rotate( 0.f, -1.57f, -1.57f ); break;
+		// left facing
+		case 0: door = new Mover( engineSystems, Mover::MOVER_OBJECT_AXIS::Z, true, 0.9f, 1, 0.001f, 
+		    				glm::vec3( xCoord, 0.f, yCoord ), meshManager->GetMesh( "tempDoorMesh" ), nullptr, 
+		 					materialManager->GetMaterial( "tempDoorMaterial" ), &gCamera );
+				door->Rotate( 0.f, -1.57f, -1.57f ); break;
 		// front facing
-		case 1: door->Rotate( -1.57f, 3.14f, 0.f ); break;
+		case 1: door = new Mover( engineSystems, Mover::MOVER_OBJECT_AXIS::X, true, 0.9f, 1, 0.001f, 
+		    				glm::vec3( xCoord, 0.f, yCoord ), meshManager->GetMesh( "tempDoorMesh" ), nullptr, 
+		 					materialManager->GetMaterial( "tempDoorMaterial" ), &gCamera );
+				door->Rotate( -1.57f, 0.f, 0.f ); break;
 	}
-	door->Scale( 1.f, 0.05f, 1.f );
-	door->Translate( glm::vec3( 0.5f, 0.5f, 0.5f ) );
 
-	gGameObjects.push_back( (UniqueGameObjectPtr)( door ) );
+	if( door != nullptr ) {
+		door->Scale( 1.f, 0.05f, 1.f );
+		door->Translate( glm::vec3( 0.5f, 0.5f, 0.5f ) );
+		gGameObjects.push_back( (UniqueGameObjectPtr)( door ) );
+	}
 }
 
 static void PlaceLight( U32 xCoord, U32 yCoord ) {
-	gGameObjects.push_back( (UniqueGameObjectPtr)( new BillBoard( glm::vec3( xCoord, 1.f, yCoord ),
+	gGameObjects.push_back( (UniqueGameObjectPtr)( new BillBoard( engineSystems, glm::vec3( xCoord + 0.5f, 1.f, yCoord + 0.5f ),
 												nullptr, spriteManager->GetSprite( "light" ), 
 												materialManager->GetMaterial( "objectSheet" ), &gCamera ) ) );
 }

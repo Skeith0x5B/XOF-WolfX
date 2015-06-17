@@ -2,8 +2,25 @@
 WolfX
 =====
 
-TODO: Make FacePlayer() a static function in WolfXGameObjects.cpp. Have it accept a game object ref, this needs a camera base class
-		to be added so we can access it within FacePlayer().
+LEVEL TEXTURES: 
+	WALLS(7): Blue stone, blue stone w/ jail-bars, door, gray stone, gray stone with eagle, gray stone with flag, wood
+	FLOOR/ROOF: Light gray for floor, dark gray for roof
+	
+-----
+TODO: Add hashing function for string-based resource identifiers
+-----
+
+TODO: Add audio system API-agnostic interfaces
+
+NOTE: SFML Internal limit of 256 audio sounds
+
+NOTE: Render request system may allow for dynamic/static element toggling
+
+TODO: Change material, GPUState, texture and shader to use move constructors? - STARTED
+
+TODO: Give sprite class its own animation rate/speed field. Animations should scale by dt and a proprietary speed value?
+
+NOTE: Player object may need a custom draw function.
 
 TODO: Convert rotation from radians to more intuitive degrees.
 
@@ -12,9 +29,7 @@ TODO: Add .obj support to mesh manager
 NOTE: Issues with meshes spawning several units off resolved by having the mesh manager dynamically allocate the mesh
 		(similar to how the material manager dynamically allocates textures and shaders to preserve OpenGL-related info about them).
 
-NOTE: Currently toggling culling off then back on for sprites.
-
-TODO: Merge camera Yaw() and Pitch() into PitchAndYaw() to reduce stack pushes
+NOTE: Currently toggling culling off then back on for sprites. - CAN REMOVE WHEN RENDERING REQUEST SYSTEM ADDED
 
 TODO: Base class for cameras
 
@@ -30,9 +45,6 @@ TODO: Mesh class - InitMaterial(): change DEFAULT_MESH_MAT to actual mesh name f
 		XOF_Hash.hpp/cpp : hash function and hash table(internal to XOF_Hash.hpp/cpp via static).
 		Keeping a table will allow for collision checking.
 		
-- NOTE: Updating game objects, engine book p918-920 suggest batching (perhaps have rendering requests etc... instead of
-		draw calls). Then process those requests at the end?
-
 ---
 
 PROBLEM:	Event system of derived events adding hardcoded fields won't work since the container is of type Event.

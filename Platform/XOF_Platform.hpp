@@ -15,34 +15,53 @@
 //namespace xof {
 
 
+#include "../Core/XOF_Assert.hpp"
+
+#include <iostream>
+#include <memory>
+#include <string>
+
+
 // Detect OS/Platform
+#define XOF_PLATFORM_WINDOWS 1
+#define XOF_PLATFORM_LINUX   2
+
 #if defined( _WIN64 )
 	#define XOF_PLATFORM  XOF_PLATFORM_WINDOWS
 	#define WIN64_LEAN_AND_MEAN
 	#include <Windows.h>
 	#include <time.h>
-
 	typedef HWND handle;
 #elif defined ( _WIN32 )
 	#define XOF_PLATFORM  XOF_PLATFORM_WINDOWS
 	#define WIN32_LEAN_AND_MEAN
 	#include <Windows.h>
 	#include <time.h>
-
 	typedef HWND handle;
 #elif defined( __linux__ )
 	#define XOF_PLATFORM  XOF_PLATFORM_XOF
 	#include <time.h>
-	
 	typedef void* handle; // 7/10/12
 #else
 	#error Unknown/unsupported platform (OS) - compilation stopped. 
 #endif // OS
 
 
-#include <iostream>
-#include <memory>
-#include <string>
+// Compiler, only supporting msvc and gnuc at the moment - add more as required
+// http://sourceforge.net/apps/mediawiki/predef/index.php?title=Compilers
+#define XOF_COMPILER_MSVC 1
+#define XOF_COMPILER_GCC  2
+
+#if defined( _MSC_VER )
+	#if _MSC_VER >= 1400 // vs 2005 onward support __cpuid intrinsic
+		#include <intrin.h>
+	#endif
+	#define XOF_COMPILER XOF_COMPILER_MSVC
+#elif defined( __GNUC__ )
+	#define XOF_COMPILER XOF_COMPILER_GCC
+#else
+	#error Unknown/unsupported compiler - compilation stopped.
+#endif // Compiler
 
 
 // Unsigned data types
@@ -54,12 +73,12 @@ typedef unsigned short	U16;
 typedef unsigned int	U32, UINT;
 
 // Signed data types
-typedef char	I8 , CHAR;
-typedef short	I16;
+typedef char			I8 , CHAR;
+typedef short			I16;
 #ifdef INT
 #undef INT
 #endif
-typedef int		I32, INT;
+typedef int				I32, INT;
 
 
 // 64 bit can be a little compiler-specific

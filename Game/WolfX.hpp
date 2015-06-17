@@ -6,18 +6,11 @@
 // TODO: Replace these implementation-specific includes with the abstract ones
 #include "../HIDs/XOF_Keyboard_SFML.hpp"
 #include "../HIDs/XOF_Mouse_SFML.hpp"
-#include "../Rendering/XOF_Renderer_OpenGL.hpp"
 #include "../Rendering/XOF_FirstPersonCamera.hpp"
+class Renderer;
 
 
-struct TempLevel {
-	Texture	levelMap;
-	Mesh levelGeom;
-	UniqueMeshPtr levelPtr;
-	std::vector<Transform> tileTransforms;
-	Material *tileMaterial;
-	FirstPersonCamera *playerView;
-};
+#include "../GameplayFoundations/XOF_EngineSubSystemFrontEnd.hpp"
 
 
 class WolfX : public Game {
@@ -29,7 +22,9 @@ public:
 	virtual void		Run();
 
 private:
-	Renderer			mRenderer;
+	EngineSubSystems	mEngine;
+
+	std::unique_ptr<Renderer> mRenderer;
 	Keyboard			mKeyboard;
 	Mouse				mMouse;
 

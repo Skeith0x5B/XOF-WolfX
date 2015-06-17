@@ -14,9 +14,28 @@
 */
 #include "XOF_Renderer_OpenGL.hpp"
 #include "XOF_Vertex.hpp"
+#include "XOF_GPUState.hpp"
 
 #include <GL/glew.h>
 #include <SFML/OpenGL.hpp>
+
+
+#include "../GameplayFoundations/XOF_GameObject.hpp"
+// define temp level
+#include "../Game/WolfX.hpp"
+
+
+// Must correspond to those in XOF_GPUState.hpp
+static U32 XOF_GL_GPU_STATE_FLAGS[] = {
+	GL_CW,
+	GL_CCW,
+	GL_CULL_FACE,
+	GL_BACK,
+	GL_FRONT,
+	GL_DEPTH_TEST,
+	GL_DEPTH_CLAMP,
+	// etc..?
+};
 
 
 bool Renderer::StartUp() {
@@ -60,12 +79,28 @@ void Renderer::ShutDown() {
 	glDisableVertexAttribArray( 3 );
 }
 
-void Renderer::Draw() {
-	// ...
+void Renderer::SubmitRenderRequest( RenderRequest& request ) {
+	mRenderRequests.push_back( std::move( request ) );
 }
 
-void Renderer::Draw( const GameObject& object ) {
-	DrawMesh( *object.GetMesh(), *object.GetMaterial() );
+void Renderer::RenderFrame() {
+	ClearScreen();
+
+	for( RenderRequest& req : mRenderRequests ) {
+		glm::mat4 MVP = ( req.camera->GetProjectionMatrix() * req.camera->GetViewMatrix() ) * 
+			req.transform->GetModelToWorldMatrix();
+
+		req.material->GetShader()->SetUniform( "transform", MVP );
+
+		SetGPUState( *req.material->GetGPUState() );
+
+		switch( req.type ) {
+			case XOF_RENDER_REQUEST_TYPE::RENDER_MESH: DrawMesh( *req.mesh, *req.material ); break;
+			case XOF_RENDER_REQUEST_TYPE::RENDER_SPRITE: DrawSprite( *req.sprite, *req.material ); break;
+		}
+	}
+
+	mRenderRequests.clear();
 }
 
 void Renderer::ClearScreen() {
@@ -75,28 +110,6 @@ void Renderer::ClearScreen() {
 void Renderer::Resize( U32 newWidth, U32 newHeight ) {
 	glViewport( 0, 0, newWidth, newHeight );
 }
-
-// TEMP
-#include "../Game/WolfX.hpp"
-void Renderer::DrawTempWolfXLevel( const TempLevel& tempLevel ) {
-	const glm::mat4 MVP = tempLevel.playerView->GetProjectionMatrix() * tempLevel.playerView->GetViewMatrix();
-	tempLevel.tileMaterial->GetShader()->SetUniform( "transform", 
-			MVP * tempLevel.tileTransforms[0].GetModelToWorldMatrix() );
-
-	DrawMesh( tempLevel.levelGeom, *tempLevel.tileMaterial );
-}
-
-void Renderer::DrawTempWolfXGameObject( const GameObject& object, const FirstPersonCamera& camera ) {
-	glm::mat4 MVP = ( camera.GetProjectionMatrix() * camera.GetViewMatrix() ) * 
-		object.GetTransform().GetModelToWorldMatrix();
-	object.GetMaterial()->GetShader()->SetUniform( "transform", MVP );
-	if( object.GetSprite() != nullptr) {
-		DrawSprite( *object.GetSprite(), *object.GetMaterial() );
-	} else if( object.GetMesh() != nullptr) {
-		DrawMesh( *object.GetMesh(), *object.GetMaterial() );
-	}
-}
-
 
 void Renderer::DrawMesh( const Mesh& mesh, const Material& material ) {
 	U32 diffuseTextureCount = material.GetTextureCount( XOF_TEXTURE_TYPE::DIFFUSE );
@@ -128,8 +141,6 @@ void Renderer::DrawMesh( const Mesh& mesh, const Material& material ) {
 }
 
 void Renderer::DrawSprite( const Sprite& sprite, const Material& material ) {
-	glDisable( GL_CULL_FACE );
-
 	glBindBuffer( GL_ARRAY_BUFFER, sprite.mVB );
 	glBufferData( GL_ARRAY_BUFFER, sizeof( Vertex ) * 4, &sprite.mVertices, GL_DYNAMIC_DRAW );
 
@@ -145,7 +156,23 @@ void Renderer::DrawSprite( const Sprite& sprite, const Material& material ) {
 	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, sprite.mIB );
 	glDrawElements( GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0 );
 
-	glEnable( GL_CULL_FACE );
-
 	glBindBuffer( GL_ARRAY_BUFFER, 0 );
+}
+
+void Renderer::SetGPUState( const GPUState& gpuState ) {
+	U8 highestFlag = gpuState.GetHighestEnabledFlag();
+	U16 flags = gpuState.GetEnabledFlags();
+	for( U16 i=0; i <= highestFlag; ++i ) {
+		if( flags & ( 1 << i ) ) {
+			glEnable( XOF_GL_GPU_STATE_FLAGS[i] );
+		}
+	}
+
+	highestFlag = gpuState.GetHighestDisabledFlag();
+	flags = gpuState.GetDisabledFlags();
+	for( U16 i=0; i <= highestFlag; ++i ) {
+		if( flags & ( 1 << i ) ) {
+			glDisable( XOF_GL_GPU_STATE_FLAGS[i] );
+		}
+	}
 }

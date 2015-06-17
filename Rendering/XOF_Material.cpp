@@ -31,3 +31,7 @@ U8 Material::GetTextureCount( XOF_TEXTURE_TYPE type ) const {
 Shader* Material::GetShader() {
 	return mShader;
 }
+
+GPUState* Material::GetGPUState() const {
+	return mGPUState;
+}

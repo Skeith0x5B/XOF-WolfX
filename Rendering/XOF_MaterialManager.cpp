@@ -22,6 +22,13 @@ bool MaterialManager::StartUp() {
 	defaultMaterialDesc.diffuseMaps[0] = XOF_RESOURCE::TEXTURE + "DEFAULT_TEXTURE.png";
 	defaultMaterialDesc.shader = XOF_RESOURCE::SHADER + "DiffuseTexture";
 	
+	defaultMaterialDesc.gpuStateName = "DEFAULT_MATERIAL_GPU_STATE";
+	//defaultMaterialDesc.gpuState.AddToEnabledFlags( XOF_GPU_STATE_FLAGS::CW_WINDING );
+	//defaultMaterialDesc.gpuState.AddToEnabledFlags( XOF_GPU_STATE_FLAGS::CULL_BACK );
+	defaultMaterialDesc.gpuState.AddToEnabledFlags( XOF_GPU_STATE_FLAGS::CULLING );
+	defaultMaterialDesc.gpuState.AddToEnabledFlags( XOF_GPU_STATE_FLAGS::DEPTH_TEST );
+	defaultMaterialDesc.gpuState.AddToEnabledFlags( XOF_GPU_STATE_FLAGS::DEPTH_CLAMP );
+
 	if( AddMaterial( "DEFAULT_MATERIAL", defaultMaterialDesc ) == nullptr ) {
 		std::cerr << "MaterialManager::StartUp() - Default material creation failed" << std::endl;
 		return false;
@@ -69,11 +76,21 @@ Material* MaterialManager::AddMaterial( const std::string &materialName, const M
 			material.mShader = shaderPtr;
 		}
 
+		// Set GPU state settings
+		GPUState *gpuStatePtr = nullptr;
+		if( matDesc.gpuStateName.length() != 0 ) { // TEMP
+			if( ( gpuStatePtr = ResolveGPUState( matDesc.gpuStateName, matDesc.gpuState ) ) != nullptr ) {
+				material.mGPUState = gpuStatePtr;
+			}
+		} else {
+			material.mGPUState = mGPUStates.find( "DEFAULT_MATERIAL_GPU_STATE" )->second.get();
+		}
+
+
 		// Add to manager
 		auto itr = mMaterials.emplace( materialName, material );//std::move( material ) ); // will need Material(const Material&& m) {}
 		if( itr.first == mMaterials.end() ) {
-			std::cerr << "MaterialManager::AddMaterial() - Failed to add material: " <<
-				materialName << std::endl;
+			std::cerr << "MaterialManager::AddMaterial() - Failed to add material: " << materialName << std::endl;
 			return nullptr;
 		}
 		materialPtr = &itr.first->second;
@@ -104,7 +121,7 @@ Texture* MaterialManager::ResolveTexture( const std::string &textureName ) {
 		}
 		texturePtr = itr.first->second.get();
 	} else {
-		std::cerr << "MaterialManager::ResolveTexture() - Failed to load texture : " << 
+		std::cerr << "MaterialManager::ResolveTexture() - Failed to load texture: " << 
 			textureName << std::endl;
 	}
 
@@ -124,9 +141,24 @@ Shader* MaterialManager::ResolveShader( const std::string &shaderName ) {
 		}
 		shaderPtr = itr.first->second.get();
 	} else {
-		std::cerr << "MaterialManager::ResolveShader() - Failed to load Shader : " << 
+		std::cerr << "MaterialManager::ResolveShader() - Failed to load Shader: " << 
 			shaderName << std::endl;
 	}
 
 	return shaderPtr;
+}
+
+GPUState* MaterialManager::ResolveGPUState( const std::string& gpuStateName, const GPUState& gpuState ) {
+	UniqueGPUStatePtr gpuStateT( new GPUState( gpuState ) );
+
+	GPUState *gpuStatePtr = nullptr;
+	auto itr = mGPUStates.emplace( gpuStateName, std::move( gpuStateT ) );
+	if( itr.first == mGPUStates.end() ) {
+		std::cerr << "MaterialManager::ResolveGPUState() - Failed to add GPUState: " <<
+			gpuStateName << std::endl;
+		return nullptr;
+	}
+	gpuStatePtr = itr.first->second.get();
+	
+	return gpuStatePtr;
 }

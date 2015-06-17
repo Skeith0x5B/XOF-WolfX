@@ -32,6 +32,10 @@
     <ClCompile Include="Rendering\XOF_SpriteManager.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Rendering\XOF_MeshManager.cpp" />
+    <ClCompile Include="Rendering\XOF_GPUState.cpp" />
+    <ClCompile Include="Audio\XOF_Music.cpp" />
+    <ClCompile Include="Audio\XOF_SoundEffect.cpp" />
+    <ClCompile Include="Audio\XOF_AudioManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\XOF_Platform.hpp">
@@ -72,5 +76,15 @@
     <ClInclude Include="Rendering\XOF_Sprite.hpp" />
     <ClInclude Include="Rendering\XOF_SpriteManager.hpp" />
     <ClInclude Include="Rendering\XOF_MeshManager.hpp" />
+    <ClInclude Include="Core\XOF_Assert.hpp" />
+    <ClInclude Include="Rendering\XOF_GPUState.hpp" />
+    <ClInclude Include="Rendering\XOF_RenderRequest.hpp" />
+    <ClInclude Include="GameplayFoundations\XOF_EngineSubSystemFrontEnd.hpp" />
+    <ClInclude Include="Audio\XOF_SoundEffect.hpp" />
+    <ClInclude Include="Audio\XOF_Music.hpp" />
+    <ClInclude Include="Audio\XOF_AudioRequest.hpp" />
+    <ClInclude Include="Audio\XOF_AudioManager.hpp" />
+    <ClInclude Include="Audio\XOF_AudioEngine.hpp" />
+    <ClInclude Include="Game\WolfX_ResourcePaths.hpp" />
   </ItemGroup>
 </Project>

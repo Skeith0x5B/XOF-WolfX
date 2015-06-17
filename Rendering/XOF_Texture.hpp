@@ -14,7 +14,6 @@
 
 #include "../Platform/XOF_Platform.hpp"
 #include <GL/glew.h>
-#include <string>
 
 
 enum XOF_TEXTURE_TYPE {

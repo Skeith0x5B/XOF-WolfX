@@ -19,6 +19,7 @@
 
 
 #include "../GameplayFoundations/XOF_Event.hpp"
+// ---
 #include "../Rendering/XOF_Transform.hpp"
 #include "../Rendering/XOF_Material.hpp"
 // Collision volume include
@@ -29,10 +30,13 @@
 #include <glm/vec3.hpp>
 
 
+#include "XOF_EngineSubSystemFrontEnd.hpp"
+
+
 class GameObject {
 public:
 					// Add position, mesh/sprite, material?
-					GameObject( glm::vec3 spawnPos = glm::vec3( 0.f, 0.f, 0.f ),
+					GameObject( EngineSubSystems *engineSystems, glm::vec3 spawnPos = glm::vec3( 0.f, 0.f, 0.f ),
 						Mesh *mesh = nullptr, Sprite *sprite = nullptr, 
 						Material *material = nullptr, FirstPersonCamera *camera = nullptr );
 	virtual			~GameObject();
@@ -55,6 +59,8 @@ public:
 
 	void			SetMaterial( const Material *material );
 	Material*		GetMaterial() const;
+
+	glm::vec3*		GetPosition() const;
 
 	void			Translate( const glm::vec3& translation );
 	void			Rotate( float aboutX, float aboutY, float aboutZ );
@@ -83,7 +89,8 @@ protected:
 	FirstPersonCamera	*mCamera;
 
 	// Engine subsystems
-	//Renderer*			mEngineRenderer;
+	EngineSubSystems	*mEngine;
+	Renderer*			mEngineRenderer;
 	//MeshManager*		mEngineMeshManager;
 	//SpriteManager*	mEngineSpriteManager;
 	//MaterialManager*	mEngineMaterialManager;

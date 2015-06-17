@@ -11,6 +11,7 @@ enum WOLFX_EVENTS {
 	PLAYER_SPAWNED = 0,
 	PLAYER_MOVED,
 	PLAYER_PRESSED_ACTION_KEY,
+	PLAYER_PRESSED_FIRE_KEY,
 	WOLF_X_EVENTS_COUNT,
 };
 
@@ -39,10 +40,24 @@ struct PlayerMovedEvent : public Event {
 };
 
 struct PlayerPressedActionKeyEvent : public Event {
-	PlayerPressedActionKeyEvent() { 
+	enum ARGS {
+		PLAYER_POS = 0,
+	};
+
+	PlayerPressedActionKeyEvent( const glm::vec3& playerPos ) { 
 		type = WOLFX_EVENTS::PLAYER_PRESSED_ACTION_KEY;
+
+		arguments[PLAYER_POS].asVec3f[0] = playerPos.x;
+		arguments[PLAYER_POS].asVec3f[1] = 0.f; // y isn't used in WolfX
+		arguments[PLAYER_POS].asVec3f[2] = playerPos.z;
 	}
 };
 
+struct PlayerPressedFireKeyEvent : public Event {
+	// Damage to deal arg?
+	PlayerPressedFireKeyEvent() {
+		type = WOLFX_EVENTS::PLAYER_PRESSED_FIRE_KEY;
+	}
+};
 
 #endif // WOLFX_EVENTS_HPP

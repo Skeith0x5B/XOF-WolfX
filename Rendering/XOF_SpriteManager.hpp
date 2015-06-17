@@ -18,9 +18,9 @@
 
 
 struct SpriteAnimationParams {
-	U16 frameCount;
-	U16 startingFrame;
-	U16 subAnimationFrameCount;
+	U8 frameCount;
+	U8 startingFrame;
+	U8 subAnimationFrameCount;
 };
 
 
